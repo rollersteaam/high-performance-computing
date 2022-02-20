@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+advection2D
+final.dat
+final.png
+initial.dat
+initial.png
