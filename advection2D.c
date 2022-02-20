@@ -20,6 +20,7 @@ Notes: The time step is calculated using the CFL condition
 
 #include <stdio.h>
 #include <math.h>
+#include <omp.h>
 
 /*********************************************************************
                       Main function
@@ -68,8 +69,8 @@ int main(){
   float y2;   // y squared (used to calculate iniital conditions)
   
   /* Calculate distance between points */
-  float dx = (xmax-xmin) / ( (float) NX);
-  float dy = (ymax-ymin) / ( (float) NY);
+  const float dx = (xmax-xmin) / ( (float) NX);
+  const float dy = (ymax-ymin) / ( (float) NY);
   
   /* Calculate time step using the CFL condition */
   /* The fabs function gives the absolute value in case the velocity is -ve */
@@ -87,18 +88,21 @@ int main(){
 
   /*** Place x points in the middle of the cell ***/
   /* LOOP 1 */
+  #pragma omp parallel for default (none) shared(x)
   for (int i=0; i<NX+2; i++){
     x[i] = ( (float) i - 0.5) * dx;
   }
 
   /*** Place y points in the middle of the cell ***/
   /* LOOP 2 */
+  #pragma omp parallel for default (none) shared(y)
   for (int j=0; j<NY+2; j++){
     y[j] = ( (float) j - 0.5) * dy;
   }
 
   /*** Set up Gaussian initial conditions ***/
   /* LOOP 3 */
+  #pragma omp parallel for default (none) private(x2, y2) shared(u, x, y)
   for (int i=0; i<NX+2; i++){
     for (int j=0; j<NY+2; j++){
       x2      = (x[i]-x0) * (x[i]-x0);
@@ -111,6 +115,7 @@ int main(){
   FILE *initialfile;
   initialfile = fopen("initial.dat", "w");
   /* LOOP 4 */
+  #pragma omp parallel for default (none) shared(x, y, u, initialfile)
   for (int i=0; i<NX+2; i++){
     for (int j=0; j<NY+2; j++){
       fprintf(initialfile, "%g %g %g\n", x[i], y[j], u[i][j]);
