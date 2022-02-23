@@ -55,7 +55,6 @@ int main(){
 	const int nsteps=800; // Number of time steps
 
 	/* Velocity */
-	const float velx=1.0; // Velocity in x direction
 	const float vely=0; // Velocity in y direction
 	
 	/* Arrays to store variables. These have NX+2 elements
@@ -71,10 +70,16 @@ int main(){
 	/* Calculate distance between points */
 	const float dx = (xmax-xmin) / ( (float) NX);
 	const float dy = (ymax-ymin) / ( (float) NY);
+
+	/* Atmospheric Boundary Layer Logarithmic Profile Variables */
+	const float ustar = 0.2;
+	const float zzero = 1.0;
+	const float karmansConstant = 0.41;
 	
 	/* Calculate time step using the CFL condition */
 	/* The fabs function gives the absolute value in case the velocity is -ve */
-	float dt = CFL / ( (fabs(velx) / dx) + (fabs(vely) / dy) );
+	const float maxvelocity = (ustar / karmansConstant) * log(ymax / zzero);
+	float dt = CFL * (dx / maxvelocity);
 	
 	/*** Report information about the calculation ***/
 	printf("Grid spacing dx     = %g\n", dx);
@@ -83,8 +88,6 @@ int main(){
 	printf("Time step           = %g\n", dt);
 	printf("No. of time steps   = %d\n", nsteps);
 	printf("End time            = %g\n", dt*(float) nsteps);
-	printf("Distance advected x = %g\n", velx*dt*(float) nsteps);
-	printf("Distance advected y = %g\n", vely*dt*(float) nsteps);
 
 	/*** Place x points in the middle of the cell ***/
 	/* LOOP 1 */
@@ -151,9 +154,15 @@ int main(){
 		/*** Calculate rate of change of u using leftward difference ***/
 		/* Loop over points in the domain but not boundary values */
 		/* LOOP 8 */
-		#pragma omp parallel for default (none) shared(u, dudt)
+		#pragma omp parallel for default (none) shared(u, dudt, y)
 		for (int i=1; i<NX+1; i++){
 			for (int j=1; j<NY+1; j++){
+				float z = y[j];
+
+				float velx = z > zzero ? 
+					(ustar / karmansConstant) * log(z / zzero) :
+					0;
+
 				dudt[i][j] = -velx * (u[i][j] - u[i-1][j]) / dx
 										- vely * (u[i][j] - u[i][j-1]) / dy;
 			}
