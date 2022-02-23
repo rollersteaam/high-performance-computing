@@ -194,6 +194,33 @@ int main(){
 	}
 	fclose(finalfile);
 
+	/* Calculate vertically distributed averages at the end */
+	float uAverages[NX];
+
+	// Ignore boundary values
+	#pragma omp parallel for default (none) shared(uAverages, u)
+	for (int i = 1; i < NX + 1; i++) {
+		float uSum = 0;
+
+		for (int j = 1; j < NY + 1; j++) {
+			uSum += u[i][j];
+		}
+
+		uSum /= NY;
+
+		uAverages[i - 1] = uSum;
+	}
+
+	/* Output averages to a file ready for plotting */
+	FILE *averagesFile;
+	averagesFile = fopen("averages.dat", "w");
+
+	for (int i=0; i<NX; i++){
+		fprintf(averagesFile, "%g %g\n", x[i], uAverages[i]);
+	}
+
+	fclose(averagesFile);
+
 	return 0;
 }
 

@@ -1,0 +1,13 @@
+# Send output to a PNG file
+set terminal png  enhanced 
+# Set the name of the output file
+set output "averages.png"
+
+# Set ranges and labels for axes
+set xlabel "x"
+set ylabel "Averages of u(x, y)"
+
+# Plot the data 
+plot "averages.dat" with lines
+
+# End of file
